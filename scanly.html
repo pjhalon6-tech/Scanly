@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanly — Scan anything. Make something.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FAFAF8;
+    --surface: #FFFFFF;
+    --border: #E8E6E0;
+    --border-hover: #C8C6C0;
+    --text: #1A1A18;
+    --muted: #7A7870;
+    --accent: #1A1A18;
+    --green: #1D9E75;
+    --purple: #7F77DD;
+    --amber: #BA7517;
+    --pink: #D4537E;
+    --blue: #378ADD;
+    --sage: #639922;
+    --info-bg: #E6F1FB;
+    --info-text: #185FA5;
+    --success: #0F6E56;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 24px 16px;
+  }
+
+  .phone {
+    width: 390px;
+    min-height: 780px;
+    background: var(--surface);
+    border-radius: 44px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
+  }
+
+  .screen { display: none; flex-direction: column; min-height: 780px; }
+  .screen.active { display: flex; }
+
+  /* Nav */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 52px 24px 16px;
+    background: var(--surface);
+  }
+  .nav-logo { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: -0.5px; }
+  .nav-sub { font-size: 12px; color: var(--muted); margin-top: 1px; font-weight: 400; }
+  .nav-back {
+    background: none; border: none; cursor: pointer;
+    font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 4px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .nav-back svg { width: 16px; height: 16px; }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex;
+    border-top: 1px solid var(--border);
+    padding: 12px 0 28px;
+    background: var(--surface);
+    margin-top: auto;
+  }
+  .bottom-nav button {
+    flex: 1; background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-size: 11px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-weight: 400;
+  }
+  .bottom-nav button.active { color: var(--text); font-weight: 500; }
+  .bottom-nav button svg { width: 22px; height: 22px; stroke-width: 1.5; }
+
+  /* Scan button */
+  .scan-hero {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .scan-circle {
+    width: 88px; height: 88px;
+    border-radius: 50%;
+    background: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  }
+  .scan-circle:hover { transform: scale(1.05); box-shadow: 0 12px 32px rgba(0,0,0,0.22); }
+  .scan-circle:active { transform: scale(0.97); }
+  .scan-circle svg { width: 36px; height: 36px; stroke: white; stroke-width: 1.5; }
+  .scan-label { font-size: 13px; color: var(--muted); }
+
+  /* Category grid */
+  .section-label {
+    padding: 4px 24px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 0 24px 16px;
+  }
+  .cat-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 10px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  }
+  .cat-card:hover { border-color: var(--border-hover); background: #F5F4F0; }
+  .cat-card:active { transform: scale(0.97); }
+  .cat-icon { font-size: 26px; margin-bottom: 8px; }
+  .cat-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .cat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.3; }
+
+  /* Pricing */
+  .plan-list { padding: 12px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .plan-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .plan-card.featured { border: 2px solid var(--text); }
+  .badge {
+    display: inline-block;
+    background: var(--text); color: var(--surface);
+    font-size: 10px; font-weight: 500;
+    padding: 3px 10px; border-radius: 20px;
+    margin-bottom: 10px; letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .plan-name { font-size: 15px; font-weight: 500; }
+  .plan-price { font-size: 32px; font-weight: 300; font-family: 'DM Serif Display', serif; margin: 6px 0 2px; letter-spacing: -1px; }
+  .plan-price span { font-size: 14px; font-weight: 400; font-family: 'DM Sans', sans-serif; color: var(--muted); }
+  .plan-save { font-size: 12px; color: var(--success); margin-bottom: 12px; font-weight: 500; }
+  .plan-feat { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .plan-feat svg { width: 14px; height: 14px; flex-shrink: 0; }
+  .feat-yes { stroke: var(--success); }
+  .feat-no { stroke: var(--border-hover); }
+
+  /* Buttons */
+  .btn-primary {
+    width: calc(100% - 48px); margin: 8px 24px;
+    padding: 16px; border-radius: var(--radius);
+    background: var(--text); color: var(--surface);
+    font-size: 15px; font-weight: 500; border: none; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-outline {
+    width: calc(100% - 48px); margin: 4px 24px;
+    padding: 14px; border-radius: var(--radius);
+    background: transparent; color: var(--text);
+    font-size: 14px; font-weight: 400; border: 1px solid var(--border); cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.15s;
+  }
+  .btn-outline:hover { border-color: var(--border-hover); }
+
+  /* Results */
+  .result-header { padding: 12px 24px 8px; }
+  .result-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .tag {
+    display: inline-block; font-size: 12px; padding: 5px 12px;
+    border-radius: 20px; background: var(--bg);
+    border: 1px solid var(--border); color: var(--muted);
+  }
+  .result-box {
+    margin: 8px 24px; background: var(--bg);
+    border-radius: var(--radius); padding: 20px;
+    border: 1px solid var(--border); flex: 1;
+  }
+  .result-title { font-size: 14px; font-weight: 500; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+  .recipe-item { border-top: 1px solid var(--border); padding: 14px 0; }
+  .recipe-item:last-child { border-bottom: none; }
+  .recipe-name { font-size: 14px; font-weight: 500; }
+  .recipe-desc { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .recipe-tags { display: flex; gap: 6px; margin-top: 8px; }
+  .recipe-tag { font-size: 11px; padding: 3px 8px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+
+  /* History */
+  .history-list { padding: 8px 24px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .history-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .history-item:hover { border-color: var(--border-hover); }
+  .history-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .history-info .h-name { font-size: 14px; font-weight: 500; }
+  .history-info .h-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* Camera mock */
+  .camera-mock {
+    margin: 12px 24px; height: 200px;
+    background: #111; border-radius: var(--radius);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; border: 1px dashed #444; position: relative; overflow: hidden;
+  }
+  .camera-mock::before {
+    content: ''; position: absolute;
+    top: 20px; left: 20px; right: 20px; bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+  }
+  .camera-mock svg { width: 40px; height: 40px; stroke: rgba(255,255,255,0.4); stroke-width: 1.5; }
+  .camera-mock span { font-size: 13px; color: rgba(255,255,255,0.4); }
+
+  .fine-print { text-align: center; font-size: 11px; color: var(--muted); padding: 6px 24px 12px; }
+</style>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- HOME SCREEN -->
+  <div id="home" class="screen active">
+    <div class="nav">
+      <div>
+        <div class="nav-logo">Scanly</div>
+        <div class="nav-sub">Scan anything. Make something.</div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:22px;height:22px;color:var(--muted)">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+    </div>
+
+    <div class="scan-hero">
+      <div class="scan-circle" onclick="go('scan')">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+      </div>
+      <div class="scan-label">Tap to scan</div>
+    </div>
+
+    <div class="section-label">Categories</div>
+    <div class="cat-grid">
+      <div class="cat-card" onclick="go('result')">
+        <div class="cat-icon">🍳</div>
+        <div class="cat-name">Food</div>
+        <div class="cat-sub">Recipes & nutrition</div>
+      </div>
+      <div class="cat-card" onclick="go('result')">
+        <div class="cat-icon">👗</div>
+        <div class="cat-name">Fashion</div>
+        <div class="cat-sub">Outfit ideas</div>
+      </div>
+      <div class="cat-card" onclick="go('result')">
+        <div class="cat-icon">🔧</div>
+        <div class="cat-name">DIY</div>
+        <div class="cat-sub">Build & fix</div>
+      </div>
+      <div class="cat-card" onclick="go('result')">
+        <div class="cat-icon">✨</div>
+        <div class="cat-name">Beauty</div>
+        <div class="cat-sub">Routines & looks</div>
+      </div>
+      <div class="cat-card" onclick="go('result')">
+        <div class="cat-icon">🎨</div>
+        <div class="cat-name">Art</div>
+        <div class="cat-sub">Creative projects</div>
+      </div>
+      <div class="cat-card" onclick="go('result')">
+        <div class="cat-icon">💊</div>
+        <div class="cat-name">Supplements</div>
+        <div class="cat-sub">Stack & combine</div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="active" onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </button>
+      <button onclick="go('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+        Scan
+      </button>
+      <button onclick="go('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </button>
+      <button onclick="go('pricing')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Pro
+      </button>
+    </div>
+  </div>
+
+  <!-- SCAN SCREEN -->
+  <div id="scan" class="screen">
+    <div class="nav">
+      <button class="nav-back" onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div style="font-size:16px;font-weight:500;">Scan</div>
+      <div style="width:48px;"></div>
+    </div>
+
+    <div class="camera-mock">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span>Camera preview</span>
+    </div>
+
+    <div class="section-label" style="padding-top:12px;">Or select a category</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 24px 16px;">
+      <span class="tag" style="cursor:pointer;" onclick="go('result')">🍳 Food</span>
+      <span class="tag" style="cursor:pointer;" onclick="go('result')">👗 Fashion</span>
+      <span class="tag" style="cursor:pointer;" onclick="go('result')">🔧 DIY</span>
+      <span class="tag" style="cursor:pointer;" onclick="go('result')">✨ Beauty</span>
+      <span class="tag" style="cursor:pointer;" onclick="go('result')">🎨 Art</span>
+      <span class="tag" style="cursor:pointer;" onclick="go('result')">💊 Supplements</span>
+    </div>
+
+    <button class="btn-primary" onclick="go('result')">Scan now</button>
+
+    <div class="bottom-nav" style="margin-top:auto;">
+      <button onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </button>
+      <button class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+        Scan
+      </button>
+      <button onclick="go('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </button>
+      <button onclick="go('pricing')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Pro
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div id="result" class="screen">
+    <div class="nav">
+      <button class="nav-back" onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div style="font-size:16px;font-weight:500;">Results</div>
+      <div style="width:48px;"></div>
+    </div>
+
+    <div class="result-header">
+      <div style="font-size:13px;color:var(--muted);">Items detected from your scan</div>
+      <div class="result-tags">
+        <span class="tag">Eggs</span>
+        <span class="tag">Tomatoes</span>
+        <span class="tag">Cheese</span>
+        <span class="tag">Spinach</span>
+        <span class="tag">Garlic</span>
+      </div>
+    </div>
+
+    <div class="result-box">
+      <div class="result-title">🍳 3 recipes you can make right now</div>
+      <div class="recipe-item">
+        <div class="recipe-name">Spinach & tomato omelette</div>
+        <div class="recipe-desc">Quick breakfast using all 5 ingredients</div>
+        <div class="recipe-tags"><span class="recipe-tag">10 min</span><span class="recipe-tag">Easy</span></div>
+      </div>
+      <div class="recipe-item">
+        <div class="recipe-name">Shakshuka</div>
+        <div class="recipe-desc">Eggs poached in spiced tomato sauce with cheese</div>
+        <div class="recipe-tags"><span class="recipe-tag">25 min</span><span class="recipe-tag">Medium</span></div>
+      </div>
+      <div class="recipe-item">
+        <div class="recipe-name">Cheesy garlic scramble</div>
+        <div class="recipe-desc">Creamy scrambled eggs with garlic and melted cheese</div>
+        <div class="recipe-tags"><span class="recipe-tag">8 min</span><span class="recipe-tag">Easy</span></div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="go('pricing')">Unlock unlimited scans</button>
+
+    <div class="bottom-nav">
+      <button onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </button>
+      <button onclick="go('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+        Scan
+      </button>
+      <button onclick="go('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </button>
+      <button onclick="go('pricing')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Pro
+      </button>
+    </div>
+  </div>
+
+  <!-- HISTORY SCREEN -->
+  <div id="history" class="screen">
+    <div class="nav">
+      <button class="nav-back" onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div style="font-size:16px;font-weight:500;">History</div>
+      <div style="width:48px;"></div>
+    </div>
+
+    <div class="history-list">
+      <div class="history-item" onclick="go('result')">
+        <div class="history-icon" style="background:#E1F5EE;">🍳</div>
+        <div class="history-info">
+          <div class="h-name">Fridge scan</div>
+          <div class="h-sub">3 recipes found · Today</div>
+        </div>
+      </div>
+      <div class="history-item" onclick="go('result')">
+        <div class="history-icon" style="background:#EEEDFE;">👗</div>
+        <div class="history-info">
+          <div class="h-name">Wardrobe scan</div>
+          <div class="h-sub">5 outfits found · Yesterday</div>
+        </div>
+      </div>
+      <div class="history-item" onclick="go('result')">
+        <div class="history-icon" style="background:#FBEAF0;">✨</div>
+        <div class="history-info">
+          <div class="h-name">Beauty scan</div>
+          <div class="h-sub">2 routines found · 2 days ago</div>
+        </div>
+      </div>
+      <div class="history-item" onclick="go('result')">
+        <div class="history-icon" style="background:#FAEEDA;">🔧</div>
+        <div class="history-info">
+          <div class="h-name">Workshop scan</div>
+          <div class="h-sub">4 projects found · 3 days ago</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </button>
+      <button onclick="go('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+        Scan
+      </button>
+      <button class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </button>
+      <button onclick="go('pricing')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Pro
+      </button>
+    </div>
+  </div>
+
+  <!-- PRICING SCREEN -->
+  <div id="pricing" class="screen">
+    <div class="nav">
+      <button class="nav-back" onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div style="font-size:16px;font-weight:500;">Go Pro</div>
+      <div style="width:48px;"></div>
+    </div>
+
+    <div style="padding:4px 24px 12px; font-size:13px; color:var(--muted);">Unlimited scans across every category</div>
+
+    <div class="plan-list">
+      <div class="plan-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>5 scans per month</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>All 6 categories</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--border-hover)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Save results</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--border-hover)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Step-by-step guides</div>
+      </div>
+
+      <div class="plan-card featured">
+        <div class="badge">Most popular</div>
+        <div class="plan-name">Yearly</div>
+        <div class="plan-price">$39.99 <span>/ year</span></div>
+        <div class="plan-save">Save 52% vs monthly</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Unlimited scans</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>All 6 categories</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Save & revisit results</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Step-by-step guides</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>New categories first</div>
+      </div>
+
+      <div class="plan-card">
+        <div class="plan-name">Monthly</div>
+        <div class="plan-price">$6.99 <span>/ month</span></div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Unlimited scans</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>All 6 categories</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Save & revisit results</div>
+        <div class="plan-feat"><svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Step-by-step guides</div>
+      </div>
+    </div>
+
+    <button class="btn-primary">Start free trial</button>
+    <div class="fine-print">Cancel anytime. No hidden fees.</div>
+
+    <div class="bottom-nav">
+      <button onclick="go('home')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </button>
+      <button onclick="go('scan')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+        Scan
+      </button>
+      <button onclick="go('history')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+      </button>
+      <button class="active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Pro
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function go(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelector('.phone').scrollTop = 0;
+  }
+</script>
+</body>
+</html>
